@@ -13,6 +13,7 @@ __author__ = 'LANCE'
 
 
 # Built-in libraries
+import urllib3
 from platform import system as operatingSystem
 from os import path, system
 from urllib import urlretrieve
@@ -28,13 +29,20 @@ results = {}
 links = []
 choice = ""
 tpb = "https://thepiratebay.se"
+
+# Squelch SSL warnings
+urllib3.disable_warnings()
 	
 def getSearchURL():
 	"""
 	Takes input string to search for on TPB.
 	Formats string into proper url
 	"""
-	searchString = raw_input("[+] What would you like to search?\n>")
+	try:
+		searchString = raw_input("[+] What would you like to search?\n>")
+	except KeyboardInterrupt:
+		print "\n\nLater bro."
+		exit(0)
 	searchURL = "{}/search/{}/0/7/0".format(tpb, searchString) #/0/7/0 tells TPB to sort descending by seeds
 	pageSource = requests.get(searchURL, verify=False).text #Use requests lib to fetch page source for bs4 parsing
 	analyzeURL(pageSource) #Run analyzeURL function, passing page source
