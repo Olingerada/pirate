@@ -5,44 +5,64 @@
 The Pirate Bay scraper -
 
 Uses 3 external libraries for scraping HTML elements from ThePirateBay and interacting with transmission-daemon.
-Asks user for a search selection, offers a list of choices, and grabs the magent link for the selection.
+Asks user for a search selection, offers a list of choices, and grabs the magnet link for the selection.
 
 """
 
 __author__ = 'LANCE - https://github.com/lalanza808'
 
 
+##################################################
+# Libraries
+
 # Built-in libraries
-import urllib3
-from platform import system as operatingSystem
-from os import path, system
-from urllib import urlretrieve
-from re import search
-from time import sleep
+from os import path
 
 # 3rd party libraries
 import requests
 import bs4
 import transmissionrpc
 
+##################################################
+# Variables
+
+# Dictionaries/Arrays for storing search results
 results = {}
 links = []
 choice = ""
 tpb = "https://thepiratebay.se"
 
+
 # Squelch HTTPS insecure warnings
 requests.packages.urllib3.disable_warnings()
+
+
+##################################################
+# Functions
+
+def checkTransmission():
+	"""
+	Checks to see if transmission-daemon is running on localhost
+	and and initiates the function to ask user for input
+	"""
+	try:
+		transmissionrpc.Client('localhost', port=9091)
+		getSearchURL()
+	except KeyboardInterrupt:
+		print "\n\nLater bro."
+		exit(1)
+	except transmissionrpc.error.TransmissionError:
+		print "[!] Transmission-daemon not running!"
+		exit(2)
+
 	
 def getSearchURL():
 	"""
 	Takes input string to search for on TPB.
 	Formats string into proper url
+	Gets HTML source of search page for use in the next function
 	"""
-	try:
-		searchString = raw_input("[+] What would you like to search?\n> ")
-	except KeyboardInterrupt:
-		print "\n\nLater bro."
-		exit(0)
+	searchString = raw_input("[+] What would you like to search?\n>>> ")
 
 	searchURL = "{}/search/{}/0/7/0".format(tpb, searchString) #/0/7/0 tells TPB to sort descending by seeds
 	
@@ -58,8 +78,7 @@ def analyzeURL(source):
 	Enumerates list of elements, and adds them to results dictionary
 	"""
 	print "\n"
-	global links
-	global results
+	global links, results
 
 	pageSoup = bs4.BeautifulSoup(source) #Create Beautiful Soup object
 	for link in pageSoup.find_all('a'): #Find all anchor elements in page source
@@ -86,8 +105,9 @@ def chooseTorrent():
 	Asks for selection of torrent, and prepares for the download
 	"""
 	global links, results
+
 	try:
-		selection = int(raw_input("\n*** Enter the digit of the torrent to download.\n> "))
+		selection = int(raw_input("\n[+] Enter the digit of the torrent to download.\n>>> "))
 		if selection == 98:
 			print "\nStarting over"
 			results = {}
@@ -112,10 +132,7 @@ def downloadTorrent(torrent):
 	"""
 	Grabs the first magnet link and initiates the download using the transmissionrpc python library
 	"""
-	# TPB no longer uses torrents as subdomain. Changing script to direct add magnet links
-	#torrentName = search("/torrent/(.*)", torrent) #Strip out first portion of string (/torrent/)
-	#torrentURL = "https://torrents.thepiratebay.se/{}.torrent".format(torrentName.group(1)) #TPB uses subdomain 'torrents' to host .torrent files
-
+	
 	magnetLinks = []
 	
 	torrentPage = requests.get("{}/{}".format(tpb, torrent), verify=False)
@@ -127,24 +144,11 @@ def downloadTorrent(torrent):
 	
 	magnetLink = magnetLinks[0]
 	
-	print "\n*** Adding magnet link:\n\n{}".format(magnetLink)
+	print "\n[+] Adding magnet link for torrent:\n\n{}".format(torrent)
 	
-	checkTransmission(magnetLink)
-	#urlretrieve(torrentURL, path.basename(torrentURL)) #Save torrent file as same name
-	#checkOS(path.basename(torrentURL)) #Check host operating system for proper torrent client
+	transmissionrpc.Client('localhost').add_torrent(magnetLink)
 
-		
-def checkTransmission(torrentDownload):
-	"""
-	Checks for the existence of transmission-remote, necessary for starting torrents
-	"""
-	whichCode = system("which transmission-remote")
-	print "\n"
-	if whichCode == 0:
-		t = transmissionrpc.Client('localhost', port=9091)
-		t.add_torrent("{}".format(torrentDownload))
-		#system("transmission-remote localhost:9091 -a {}".format(torrentDownload))
-		
+	print "\n[.] Done!\n"	
 	
 if __name__ == "__main__":
-	getSearchURL()
+	checkTransmission()

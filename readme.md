@@ -39,3 +39,9 @@ $ pirate.py
 ```
 
 The rest is self explanatory
+
+## TODO
+
+ * Refactor code; not a fan of the spaghetti code functions
+ * Comment script better; for personal reasons. I hate being confused 6 months later
+ * Maybe add a setup script. Maybe
