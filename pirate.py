@@ -30,7 +30,12 @@ import transmissionrpc
 results = {}
 links = []
 choice = ""
+
+# Current/working PirateBay URL
 tpb = "https://thepiratebay.se"
+
+# IP of the machine running transmission. Probably localhost
+transmissionServer = ''
 
 
 # Squelch HTTPS insecure warnings
@@ -42,11 +47,11 @@ requests.packages.urllib3.disable_warnings()
 
 def checkTransmission():
 	"""
-	Checks to see if transmission-daemon is running on localhost
+	Checks to see if transmission-daemon is running on transmissionServer
 	and and initiates the function to ask user for input
 	"""
 	try:
-		transmissionrpc.Client('localhost', port=9091)
+		transmissionrpc.Client(transmissionServer, port=9091)
 		getSearchURL()
 	except KeyboardInterrupt:
 		print "\n\nLater bro."
@@ -146,7 +151,7 @@ def downloadTorrent(torrent):
 	
 	print "\n[+] Adding magnet link for torrent:\n\n{}".format(torrent)
 	
-	transmissionrpc.Client('localhost').add_torrent(magnetLink)
+	transmissionrpc.Client(transmissionServer).add_torrent(magnetLink)
 
 	print "\n[.] Done!\n"	
 	
