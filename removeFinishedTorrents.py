@@ -16,12 +16,16 @@ import transmissionrpc
 import pushbullet
 import requests
 from time import sleep
+from os import path
+
+# Put your API key into a text file
+apifile = path.expanduser('~/pb_api.txt')
 
 # Get rid of the SSL warnings
 requests.packages.urllib3.disable_warnings()
 
 # Grab Pushbullet API
-with open('/home/lance/pb_api.txt', 'rb') as file:
+with open(apifile, 'rb') as file:
 	api = file.read().strip()
 
 ##################################################
