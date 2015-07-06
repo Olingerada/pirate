@@ -49,4 +49,4 @@ Add a cron job to run //removeFinishedTorrents.py// every 5 minutes. Hook it int
 
  * Refactor code; not a fan of the spaghetti code functions
  * Comment script better; for personal reasons. I hate being confused 6 months later
- * Maybe add a setup script. Maybe
+ * Pushbullet read/download new torrents

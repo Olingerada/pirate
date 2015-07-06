@@ -17,6 +17,7 @@ __author__ = 'LANCE - https://github.com/lalanza808'
 
 # Built-in libraries
 from os import path
+import argparse
 
 # 3rd party libraries
 import requests
@@ -34,12 +35,24 @@ choice = ""
 # Current/working PirateBay URL
 tpb = "https://thepiratebay.se"
 
-# IP of the machine running transmission. Probably localhost
-transmissionServer = ''
+# Torrent server IP; can be any machine running transmission-daemon 
+# with a firewall inbound allowed to TCP/9091 (transmissionrpc)
+rpcserver = 'localhost'
 
 
 # Squelch HTTPS insecure warnings
 requests.packages.urllib3.disable_warnings()
+
+##################################################
+# Parsing and Arguments
+
+parser = argparse.ArgumentParser(description='Scrape The Pirate Bay for torrents.')
+
+parser.add_argument('--search', '-s', dest='searcharg', help='The string to search for on TPB', required=False)
+
+parser.add_argument('--top', '-t', dest='top', action='store_true', help='Automatically grab the torrent with most seeds', required=False)
+
+args = parser.parse_args()
 
 
 ##################################################
@@ -47,11 +60,11 @@ requests.packages.urllib3.disable_warnings()
 
 def checkTransmission():
 	"""
-	Checks to see if transmission-daemon is running on transmissionServer
+	Checks to see if transmission-daemon is running on rpcserver
 	and and initiates the function to ask user for input
 	"""
 	try:
-		transmissionrpc.Client(transmissionServer, port=9091)
+		transmissionrpc.Client(rpcserver, port=9091)
 		getSearchURL()
 	except KeyboardInterrupt:
 		print "\n\nLater bro."
@@ -67,7 +80,10 @@ def getSearchURL():
 	Formats string into proper url
 	Gets HTML source of search page for use in the next function
 	"""
-	searchString = raw_input("[+] What would you like to search?\n>>> ")
+	if args.searcharg:
+		searchString = args.searcharg
+	else:
+		searchString = raw_input("[+] What would you like to search?\n>>> ")
 
 	searchURL = "{}/search/{}/0/7/0".format(tpb, searchString) #/0/7/0 tells TPB to sort descending by seeds
 	
@@ -85,24 +101,31 @@ def analyzeURL(source):
 	print "\n"
 	global links, results
 
+	#Update the links array with the returned torrents
 	pageSoup = bs4.BeautifulSoup(source) #Create Beautiful Soup object
 	for link in pageSoup.find_all('a'): #Find all anchor elements in page source
 		if link.get('href').startswith('/torrent'): #Filter items that don't start with /torrent
 			links.append(link.get('href')) #Set the initial results to array 'links'
+	
 
-	for number,link in enumerate(links): #Enumerate the array so the numbers start at 0
-		results.update({number:link}) #Append results to results dictionary
-		print "({}) {}".format(number, path.basename(link))
+	#If -t is supplied, bypass this section of code and go on to download the top torrent
+	if args.top and links:
+		downloadTorrent(links[0])
+	else:
+		for number,link in enumerate(links): #Enumerate the array so the numbers start at 0
+			results.update({number:link}) #Append results to results dictionary
+			print "({}) {}".format(number, path.basename(link))
 
-	if results: #If dict is not empty, continue with script
-		print "\n(98) Search again"
-		print "(99) Exit"
-		chooseTorrent()
-	else: #If dict is empty (no results from search) re-run script
-		print "\nNo results found. Try again."
-		results = {}
-		links = []
-		getSearchURL() #Loop back to script start
+		if results: #If dict is not empty, continue with script
+			print "\n(98) Search again"
+			print "(99) Exit"
+			chooseTorrent()
+		else: #If dict is empty (no results from search) re-run script
+			print "\nNo results found. Try again."
+			results = {}
+			links = []
+			args.searcharg = ''
+			getSearchURL() #Loop back to script start
 
 	
 def chooseTorrent():
@@ -117,6 +140,7 @@ def chooseTorrent():
 			print "\nStarting over"
 			results = {}
 			links = []
+			args.searcharg = ''
 			getSearchURL() #Loop back to start
 		elif selection == 99:
 			print "\nBye.\n"
@@ -151,9 +175,11 @@ def downloadTorrent(torrent):
 	
 	print "\n[+] Adding magnet link for torrent:\n\n{}".format(torrent)
 	
-	transmissionrpc.Client(transmissionServer).add_torrent(magnetLink)
+	transmissionrpc.Client(rpcserver).add_torrent(magnetLink)
 
-	print "\n[.] Done!\n"	
+	print "\n[.] Done!\n"
+
+	exit(0)	
 	
 if __name__ == "__main__":
 	checkTransmission()
