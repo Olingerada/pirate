@@ -52,6 +52,8 @@ parser.add_argument('--search', '-s', dest='searcharg', help='The string to sear
 
 parser.add_argument('--top', '-t', dest='top', action='store_true', help='Automatically grab the torrent with most seeds', required=False)
 
+parser.add_argument('--link', '-l', dest='link', help='Direct link to magnet or torrent file', required=False)
+
 args = parser.parse_args()
 
 
@@ -80,7 +82,9 @@ def getSearchURL():
 	Formats string into proper url
 	Gets HTML source of search page for use in the next function
 	"""
-	if args.searcharg:
+	if args.link:
+		transmissionrpc.Client(rpcserver).add_torrent(args.link)
+	elif args.searcharg:
 		searchString = args.searcharg
 	else:
 		searchString = raw_input("[+] What would you like to search?\n>>> ")
