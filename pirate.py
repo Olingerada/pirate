@@ -84,6 +84,7 @@ def getSearchURL():
 	"""
 	if args.link:
 		transmissionrpc.Client(rpcserver).add_torrent(args.link)
+		exit(0)
 	elif args.searcharg:
 		searchString = args.searcharg
 	else:

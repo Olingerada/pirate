@@ -21,7 +21,7 @@ from time import sleep
 from os import path,system
 
 # Put your API key into a text file
-pbapi = 'xxxxxxxxxx'
+api = 'xxxxxxxxxx'
 
 # Get rid of the SSL warnings
 requests.packages.urllib3.disable_warnings()
