@@ -29,18 +29,18 @@ $ pip install transmissionrpc requests beautifulsoup4
 Then edit the pirate.py file, and change the //rpcserver// variable to the server's IP/hostname (if not localhost)
 
 
-#### Server Side (transmission-daemon)
+#### Server Side (transmission-daemon and pirate-remote.py)
 
-Transmission-daemon needs to be installed for downloading torrents and TCP/9091 needs to be opened
+Transmission-daemon needs to be installed for downloading torrents and TCP/9091 needs to be opened on the computer's firewall
 
-//RHEL/CentOS/Fedora (yum pkg mgmt)//
+RHEL/CentOS/Fedora (yum)
 
 ```
 $ yum install transmission-daemon transmission-cli 
 $ firewall-cmd --add-port=9091/tcp --permanent
 ```
 
-//Debian/Ubuntu (apt pkg mgmt)//
+Debian/Ubuntu (apt)
 
 ```
 $ apt-get install transmission-daemon transmission-cli
@@ -53,9 +53,9 @@ $ iptables -A INPUT -p tcp --dport 9091 -j ACCEPT
 $ pip install pushbullet.py
 ```
 
-Put your PushBullet API key in ~/pb_api.txt and set a cron job to run //pirate-remote.py// every X minutes.
+Put your PushBullet API key in api variable in the script and set a cron job to run //pirate-remote.py// every X minutes.
 
-Make sure the server running Transmission (if not localhost) is accepting traffic on TCP/9091, and RPC is enabled in the Transmission settings.json file. Read about configuring Transmission [here](https://trac.transmissionbt.com/wiki/EditConfigFiles).
+Make sure the server running Transmission (if not localhost) is accepting traffic on TCP/9091 and RPC is enabled in the Transmission settings.json file. Read about configuring Transmission [here](https://trac.transmissionbt.com/wiki/EditConfigFiles).
 
 
 ### Usage
