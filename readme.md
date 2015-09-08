@@ -1,18 +1,19 @@
-# Pirate
+# Pirate.py
 
-Command line torrent downloader. 
+Command line torrent downloader with [Pushbullet](https://pushbullet.com) notifications.	
 
-Script is the client side, Transmission server needs to be running on the local network, with RPC enabled and firewall open on port 9091/tcp.
+Default behavior parses HTML pages on [ThePirateBay](https://thepiratebay.se) based on a search string provided, then passes the magnet link to a locally running Transmission-Daemon (localhost or same LAN). 
 
-Default behavior parses HTML pages on [ThePirateBay](https://thepiratebay.se) based on a search string provided. Can also add direct links with --link. Downloads torrents using transmission-daemon.
-
+Can also add direct links with --link. 
 ----
 
 ### Requirements
 
+#### Client Side (pirate.py)
+
 This script was written in Python version 2.7. Version 3 compatibility requires rewriting some code, and may be done at a later time. Pull requests welcome.
 
-This script depends on 3 external Python libraries. Please ensure the following are installed to the system:
+3 external Python libraries needed. Please ensure the following are installed to the system:
 
  * transmissionrpc
  * requests
@@ -21,10 +22,40 @@ This script depends on 3 external Python libraries. Please ensure the following 
 If pip is installed, just run the following as root:
 
 ```
-pip install transmissionrpc requests beautifulsoup4
+$ pip install transmissionrpc requests beautifulsoup4
 ```
 
-Make sure the server running Transmission (if not localhost) is accepting traffic on port 9091, and RPC is enabled in the Transmission settings.json file.
+Then edit the pirate.py file, and change the //rpcserver// variable to the server's IP/hostname (if not localhost)
+
+
+#### Server Side (transmission-daemon)
+
+Transmission-daemon needs to be installed for downloading torrents and TCP/9091 needs to be opened
+
+//RHEL/CentOS/Fedora (yum pkg mgmt)//
+
+```
+$ yum install transmission-daemon transmission-cli 
+$ firewall-cmd --add-port=9091/tcp --permanent
+```
+
+//Debian/Ubuntu (apt pkg mgmt)//
+
+```
+$ apt-get install transmission-daemon transmission-cli
+$ iptables -A INPUT -p tcp --dport 9091 -j ACCEPT
+```
+
+[pushbullet.py](https://github.com/randomchars/pushbullet.py) is needed for Pushbullet notifications.
+
+```
+$ pip install pushbullet.py
+```
+
+Put your PushBullet API key in ~/pb_api.txt and set a cron job to run //pirate-remote.py// every X minutes.
+
+Make sure the server running Transmission (if not localhost) is accepting traffic on TCP/9091, and RPC is enabled in the Transmission settings.json file. Read about configuring Transmission [here](https://trac.transmissionbt.com/wiki/EditConfigFiles).
+
 
 ### Usage
 
@@ -42,10 +73,6 @@ Then just run it
 $ pirate.py
 ```
 
-The rest is self explanatory
-
-**BONUS**
-Add a cron job to run //removeFinishedTorrents.py// every 5 minutes. Hook it into [PushBullet](https://pushbullet.com) for mobile notifications.
 
 #### TODO
 
