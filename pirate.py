@@ -37,7 +37,7 @@ tpb = "https://thepiratebay.se"
 
 # Torrent server IP; can be any machine running transmission-daemon 
 # with a firewall inbound allowed to TCP/9091 (transmissionrpc)
-rpcserver = '10.1.1.28'
+rpcserver = 'localhost'
 
 
 # Squelch HTTPS insecure warnings
