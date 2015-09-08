@@ -5,6 +5,7 @@ Command line torrent downloader with [Pushbullet](https://pushbullet.com) notifi
 Default behavior parses HTML pages on [ThePirateBay](https://thepiratebay.se) based on a search string provided, then passes the magnet link to a locally running Transmission-Daemon (localhost or same LAN). 
 
 Can also add direct links with --link. 
+
 ----
 
 ### Requirements
