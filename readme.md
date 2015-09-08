@@ -4,7 +4,7 @@ Command line torrent downloader with [Pushbullet](https://pushbullet.com) notifi
 
 Default behavior parses HTML pages on [ThePirateBay](https://thepiratebay.se) based on a search string provided, then passes the magnet link to a locally running Transmission-Daemon (localhost or same LAN). 
 
-Can also add direct links with --link. 
+Can also add direct HTML pages of the desired torrent with --url, and direct magnet links and torrent files with --file.
 
 ----
 
@@ -26,7 +26,7 @@ If pip is installed, just run the following as root:
 $ pip install transmissionrpc requests beautifulsoup4
 ```
 
-Then edit the pirate.py file, and change the //rpcserver// variable to the server's IP/hostname (if not localhost)
+Then edit the pirate.py file, and change the __rpcserver__ variable to the server's IP/hostname (if not localhost)
 
 
 #### Server Side (transmission-daemon and pirate-remote.py)
@@ -53,7 +53,7 @@ $ iptables -A INPUT -p tcp --dport 9091 -j ACCEPT
 $ pip install pushbullet.py
 ```
 
-Put your PushBullet API key in api variable in the script and set a cron job to run //pirate-remote.py// every X minutes.
+Put your PushBullet API key in api variable in the script and set a cron job to run pirate-remote.py every X minutes.
 
 Make sure the server running Transmission (if not localhost) is accepting traffic on TCP/9091 and RPC is enabled in the Transmission settings.json file. Read about configuring Transmission [here](https://trac.transmissionbt.com/wiki/EditConfigFiles).
 

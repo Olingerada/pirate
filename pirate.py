@@ -37,7 +37,7 @@ tpb = "https://thepiratebay.se"
 
 # Torrent server IP; can be any machine running transmission-daemon 
 # with a firewall inbound allowed to TCP/9091 (transmissionrpc)
-rpcserver = 'localhost'
+rpcserver = '10.1.1.28'
 
 
 # Squelch HTTPS insecure warnings
@@ -52,7 +52,9 @@ parser.add_argument('--search', '-s', dest='searcharg', help='The string to sear
 
 parser.add_argument('--top', '-t', dest='top', action='store_true', help='Automatically grab the torrent with most seeds', required=False)
 
-parser.add_argument('--link', '-l', dest='link', help='Direct link to magnet or torrent file', required=False)
+parser.add_argument('--file', '-l', dest='file', help='Direct link to magnet or torrent file', required=False)
+
+parser.add_argument('--url', '-u', dest='url', help='HTML page of the torrent file', required=False)
 
 args = parser.parse_args()
 
@@ -72,7 +74,7 @@ def checkTransmission():
 		print "\n\nLater bro."
 		exit(1)
 	except transmissionrpc.error.TransmissionError:
-		print "[!] Transmission-daemon not running!"
+		print "[!] Transmission-daemon not running on {}!".format(rpcserver)
 		exit(2)
 
 	
@@ -82,8 +84,11 @@ def getSearchURL():
 	Formats string into proper url
 	Gets HTML source of search page for use in the next function
 	"""
-	if args.link:
-		transmissionrpc.Client(rpcserver).add_torrent(args.link)
+	if args.file:
+		transmissionrpc.Client(rpcserver).add_torrent(args.file)
+		exit(0)
+	elif args.url:
+		downloadTorrent(args.url)
 		exit(0)
 	elif args.searcharg:
 		searchString = args.searcharg
@@ -115,7 +120,7 @@ def analyzeURL(source):
 
 	#If -t is supplied, bypass this section of code and go on to download the top torrent
 	if args.top and links:
-		downloadTorrent(links[0])
+		downloadTorrent("{}/{}".format(tpb, links[0]))
 	else:
 		for number,link in enumerate(links): #Enumerate the array so the numbers start at 0
 			results.update({number:link}) #Append results to results dictionary
@@ -152,7 +157,7 @@ def chooseTorrent():
 			exit() #Quit script
 		elif selection in results: #If selection exists, set value to 'choice' variable
 			choice = results[selection] #Updates variable based on key provided above, matches it with results dict
-			downloadTorrent(choice)
+			downloadTorrent("{}/{}".format(tpb, choice))
 		else: #If anything other than 98, 99, or valid key number entered, loop back to selection input
 			print "\nNot a valid number"
 			chooseTorrent()
@@ -162,14 +167,14 @@ def chooseTorrent():
 		chooseTorrent()
 	
 
-def downloadTorrent(torrent):
+def downloadTorrent(torrentURL):
 	"""
 	Grabs the first magnet link and initiates the download using the transmissionrpc python library
 	"""
 	
 	magnetLinks = []
 	
-	torrentPage = requests.get("{}/{}".format(tpb, torrent), verify=False)
+	torrentPage = requests.get(torrentURL, verify=False)
 	torrentPageSoup = bs4.BeautifulSoup(torrentPage.content)
 	
 	for link in torrentPageSoup.find_all('a'):
@@ -178,7 +183,7 @@ def downloadTorrent(torrent):
 	
 	magnetLink = magnetLinks[0]
 	
-	print "\n[+] Adding magnet link for torrent:\n\n{}".format(torrent)
+	print "\n[+] Adding magnet link for torrent:\n\n{}".format(torrentURL)
 	
 	transmissionrpc.Client(rpcserver).add_torrent(magnetLink)
 
