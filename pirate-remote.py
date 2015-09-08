@@ -43,7 +43,7 @@ for torrent in t.get_torrents():
 # Add new torrents
 pushes = pb.get_pushes()
 for push in pushes[1]:
-	if push['body'].startswith('https://thepiratebay'):
-		system('/opt/pirate/pirate.py --url {}'.format(str(push['body'])))
+	if push['body'].startswith('magnet:?'):
+		system('/opt/pirate/pirate.py --file {}'.format(str(push['body'])))
 		pb.delete_push(push['iden'])
 		
