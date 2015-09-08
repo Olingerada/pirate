@@ -2,9 +2,9 @@
 
 Command line torrent downloader. 
 
-Parses HTML pages on [ThePirateBay](https://thepiratebay.se) based on a search string provided. Downloads torrents using transmission-daemon.
+Script is the client side, Transmission server needs to be running on the local network, with RPC enabled and firewall open on port 9091/tcp.
 
-Initially made for the older version with torrents hosted from a separate subdomain, but now modified for grabbing magnet links instead.
+Default behavior parses HTML pages on [ThePirateBay](https://thepiratebay.se) based on a search string provided. Can also add direct links with --link. Downloads torrents using transmission-daemon.
 
 ----
 
@@ -23,6 +23,8 @@ If pip is installed, just run the following as root:
 ```
 pip install transmissionrpc requests beautifulsoup4
 ```
+
+Make sure the server running Transmission (if not localhost) is accepting traffic on port 9091, and RPC is enabled in the Transmission settings.json file.
 
 ### Usage
 
