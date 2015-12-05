@@ -2,7 +2,7 @@
 
 #####Command line torrent downloader with [Pushbullet](https://pushbullet.com) notifications. 
 
-Add torrents to your Transmission download queue from anywhere, either via Pushbullet magnet link push or remote procedure calls[https://trac.transmissionbt.com/wiki/rpc] direct to the machine. 
+Add torrents to your Transmission download queue from anywhere, either via Pushbullet magnet link push or [remote procedure calls](https://trac.transmissionbt.com/wiki/rpc) direct to the machine. 
 
 -
 
@@ -64,7 +64,7 @@ $ pip install pushbullet.py
 
 Put your PushBullet API key in api variable in the script and set a cron job to run thepirate-satellite.py every X minutes.
 
-Make sure the server running Transmission (if not localhost) is accepting traffic on TCP/9091 and RPC is enabled in the Transmission settings.json file. Read about configuring Transmission [here](https://trac.transmissionbt.com/wiki/EditConfigFiles).
+Make sure the server running Transmission (if not localhost) is accepting traffic on TCP/9091 and RPC is enabled in the Transmission settings.json file. Set your whitelist to your LAN subnet. Read about configuring Transmission [here](https://trac.transmissionbt.com/wiki/EditConfigFiles).
 
 ![img](transmissionrpc_config.png)
 
@@ -91,4 +91,4 @@ $ thepirate
  * Comment script better; for personal reasons. I hate being confused 6 months later
  * Pushbullet read/download new torrents
  * Add config file support
-
+ * Auto updater

@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-
 """
 The Pirate Bay scraper - This is the client
 
@@ -10,7 +9,6 @@ Asks user for a search selection, offers a list of choices, and grabs the magnet
 """
 
 __author__ = 'LANCE - https://github.com/lalanza808'
-
 
 ##################################################
 # Libraries
@@ -28,9 +26,9 @@ import transmissionrpc
 # Variables
 
 # Dictionaries/Arrays for storing search results
-results = {}
-links = []
-choice = ""
+tpb_search_results = {}
+tpb_torrent_links = []
+user_torrent_selection = ""
 
 # Current/working PirateBay URL
 tpb = "https://thepiratebay.se"
@@ -47,148 +45,158 @@ requests.packages.urllib3.disable_warnings()
 
 parser = argparse.ArgumentParser(description='Scrape The Pirate Bay for torrents.')
 
-parser.add_argument('--search', '-s', dest='searcharg', help='The string to search for on TPB', required=False)
+parser.add_argument('--search', '-s', dest='arg_search_string', help='The string to search for on TPB', required=False)
 
-parser.add_argument('--top', '-t', dest='top', action='store_true', help='Automatically grab the torrent with most seeds', required=False)
+parser.add_argument('--top', '-t', dest='arg_take_top', action='store_true', help='Automatically grab the torrent with most seeds', required=False)
 
-parser.add_argument('--file', '-l', dest='file', help='Direct link to magnet or torrent file', required=False)
+parser.add_argument('--file', '-l', dest='arg_magnet_link', help='Direct link to magnet link or torrent file', required=False)
 
-parser.add_argument('--url', '-u', dest='url', help='HTML page of the torrent file', required=False)
+parser.add_argument('--url', '-u', dest='arg_torrent_page', help='URL of the torrent file', required=False)
 
 args = parser.parse_args()
-
 
 ##################################################
 # Functions
 
-def checkTransmission():
+#1
+def Check_Transmission_Listener():
 	"""
-	Checks to see if transmission-daemon is running on rpcserver
-	and and initiates the function to ask user for input
+	Checks to see if transmission-daemon is listening on rpcserver
+	and initiates the function to ask user for input
 	"""
 	try:
 		transmissionrpc.Client(rpcserver, port=9091)
-		getSearchURL()
+		Get_Search_URL()
 	except KeyboardInterrupt:
-		print "\n\nLater bro."
+		print "\n\nBye."
 		exit(1)
 	except transmissionrpc.error.TransmissionError:
-		print "[!] Transmission-daemon not running on {}!".format(rpcserver)
+		print "[!] Transmission-daemon not listening on {}!".format(rpcserver)
 		exit(2)
 
-	
-def getSearchURL():
+#2	
+def Get_Search_URL():
 	"""
 	Takes input string to search for on TPB.
 	Formats string into proper url
 	Gets HTML source of search page for use in the next function
 	"""
-	if args.file:
-		transmissionrpc.Client(rpcserver).add_torrent(args.file)
+	#If magnet link supplied, directly add to queue, exit script
+	if args.arg_magnet_link:
+		transmissionrpc.Client(rpcserver).add_torrent(args.arg_magnet_link)
 		exit(0)
-	elif args.url:
-		downloadTorrent(args.url)
+	#If URL supplied, skip to Download_Torrent_From_URL function
+	elif args.arg_torrent_page:
+		Download_Torrent_From_URL(args.arg_torrent_page)
 		exit(0)
-	elif args.searcharg:
-		searchString = args.searcharg
+	#If search string provided, use it for Get_Torrent_Links function
+	elif args.arg_search_string:
+		tpb_search_string = args.arg_search_string
+	#If nothing supplied, ask user for search string
 	else:
-		searchString = raw_input("[+] What would you like to search?\n>>> ")
+		tpb_search_string = raw_input("[+] What would you like to search?\n>>> ")
 
-	searchURL = "{}/search/{}/0/7/0".format(tpb, searchString) #/0/7/0 tells TPB to sort descending by seeds
+	tpb_search_url = "{}/search/{}/0/7/0".format(tpb, tpb_search_string) #/0/7/0 tells TPB to sort descending by seeds
 	
-	pageSource = requests.get(searchURL, verify=False).text #Use requests lib to fetch page source for bs4 parsing
+	tpb_torrent_page_source = requests.get(tpb_search_url, verify=False).text #Use requests lib to fetch page source for bs4 parsing
 
-	analyzeURL(pageSource) #Run analyzeURL function, passing page source
+	Get_Torrent_Links(tpb_torrent_page_source) #Run Get_Torrent_Links function, passing page source for BS4 parsing
 	
-
-def analyzeURL(source):
+#3
+def Get_Torrent_Links(source):
 	"""
 	Takes the page source and parses it with BeautifulSoup.
 	Finds all anchor elements on the page, pre-sorted by seeders
-	Enumerates list of elements, and adds them to results dictionary
+	Enumerates list of elements, and adds them to tpb_search_results dictionary
 	"""
 	print "\n"
-	global links, results
+	global tpb_torrent_links, tpb_search_results
 
-	#Update the links array with the returned torrents
-	pageSoup = bs4.BeautifulSoup(source) #Create Beautiful Soup object
-	for link in pageSoup.find_all('a'): #Find all anchor elements in page source
-		if link.get('href').startswith('/torrent'): #Filter items that don't start with /torrent
-			links.append(link.get('href')) #Set the initial results to array 'links'
+	#Update the tpb_torrent_links array with the returned torrents
+	tpb_torrent_page_soup = bs4.BeautifulSoup(source, "html.parser") #Create Beautiful Soup object
+	for link in tpb_torrent_page_soup.find_all('a'): #Find all anchor elements in page source
+		if link.get('href').startswith('/torrent'): #Only get links with /torrent as they're valid torrent pages
+			tpb_torrent_links.append(link.get('href')) #Set the results to tpb_torrent_links array
 	
 
 	#If -t is supplied, bypass this section of code and go on to download the top torrent
-	if args.top and links:
-		downloadTorrent("{}/{}".format(tpb, links[0]))
+	if args.arg_take_top and tpb_torrent_links:
+		Download_Torrent_From_URL("{}/{}".format(tpb, tpb_torrent_links[0]))
+	#Print links in numeric order to the user
 	else:
-		for number,link in enumerate(links): #Enumerate the array so the numbers start at 0
-			results.update({number:link}) #Append results to results dictionary
+		for number,link in enumerate(tpb_torrent_links): #Enumerate the array so the numbers start at 0
+			tpb_search_results.update({number:link}) #Append results to tpb_search_results dictionary
 			print "({}) {}".format(number, path.basename(link))
 
-		if results: #If dict is not empty, continue with script
+		if tpb_search_results: #If dict is not empty, continue with script
 			print "\n(98) Search again"
 			print "(99) Exit"
-			chooseTorrent()
+			Get_User_Selection()
 		else: #If dict is empty (no results from search) re-run script
 			print "\nNo results found. Try again."
-			results = {}
-			links = []
-			args.searcharg = ''
-			getSearchURL() #Loop back to script start
+			tpb_search_results = {}
+			tpb_torrent_links = []
+			args.arg_search_string = ''
+			Get_Search_URL() #Loop back to script start
 
-	
-def chooseTorrent():
+#4	
+def Get_User_Selection():
 	"""
-	Asks for selection of torrent, and prepares for the download
+	Asks for selection of torrent
 	"""
-	global links, results
+	global tpb_torrent_links, tpb_search_results
 
+	#Ask user for numeric selection
 	try:
-		selection = int(raw_input("\n[+] Enter the digit of the torrent to download.\n>>> "))
+		selection = int(raw_input("\n[+] Enter the number of the torrent to download.\n>>> "))
+		#Zeroize variables, loop back to script start
 		if selection == 98:
 			print "\nStarting over"
-			results = {}
-			links = []
-			args.searcharg = ''
-			getSearchURL() #Loop back to start
+			tpb_search_results = {}
+			tpb_torrent_links = []
+			args.arg_search_string = ''
+			Get_Search_URL()
+		#Exit script
 		elif selection == 99:
 			print "\nBye.\n"
-			exit() #Quit script
-		elif selection in results: #If selection exists, set value to 'choice' variable
-			choice = results[selection] #Updates variable based on key provided above, matches it with results dict
-			downloadTorrent("{}/{}".format(tpb, choice))
-		else: #If anything other than 98, 99, or valid key number entered, loop back to selection input
+			exit() 
+		#If valid number, move to next function to add to queue
+		elif selection in tpb_search_results: 
+			user_torrent_selection = tpb_search_results[selection] #Updates variable based on key provided above, matches it with tpb_search_results dict
+			Download_Torrent_From_URL("{}/{}".format(tpb, user_torrent_selection))
+		#If anything other than 98, 99, or valid key number entered, loop back to selection input
+		else: 
 			print "\nNot a valid number"
-			chooseTorrent()
-
+			Get_User_Selection()
+	#If number isn't used, loop back to selection input
 	except ValueError:
 		print "\nThat is not a digit."
-		chooseTorrent()
+		Get_User_Selection()
 	
-
-def downloadTorrent(torrentURL):
+#5
+def Download_Torrent_From_URL(tpb_torrent_url):
 	"""
-	Grabs the first magnet link and initiates the download using the transmissionrpc python library
+	Grabs the first magnet link and adds it to the queue via RPC to rpcserver
 	"""
 	
-	magnetLinks = []
+	tpb_magnet_links = []
 	
-	torrentPage = requests.get(torrentURL, verify=False)
-	torrentPageSoup = bs4.BeautifulSoup(torrentPage.content)
+	tpb_torrent_page = requests.get(tpb_torrent_url, verify=False)
+	tpb_torrent_page_soup = bs4.BeautifulSoup(tpb_torrent_page.content, "html.parser")
 	
-	for link in torrentPageSoup.find_all('a'):
+	for link in tpb_torrent_page_soup.find_all('a'):
 		if str(link.get('href')).startswith('magnet:?xt'):
-			magnetLinks.append(link.get('href'))
+			tpb_magnet_links.append(link.get('href'))
 	
-	magnetLink = magnetLinks[0]
+	tpb_magnet_link = tpb_magnet_links[0]
 	
-	print "\n[+] Adding magnet link for torrent:\n\n{}".format(torrentURL)
+	print "\n[+] Adding magnet link for torrent:\n\n{}".format(tpb_torrent_url)
 	
-	transmissionrpc.Client(rpcserver).add_torrent(magnetLink)
+	transmissionrpc.Client(rpcserver).add_torrent(tpb_magnet_link)
 
 	print "\n[.] Done!\n"
 
 	exit(0)	
 	
 if __name__ == "__main__":
-	checkTransmission()
+	Check_Transmission_Listener()
