@@ -38,7 +38,7 @@ $ pip install transmissionrpc requests beautifulsoup4
 Then edit the thepirate.py file, and change the __rpcserver__ variable to the server's IP/hostname (if not localhost)
 
 
-#### Server Side (transmission-daemon and pirate-remote.py)
+#### Server Side (transmission-daemon and thepirate-satellite.py)
 
 Transmission-daemon needs to be installed for downloading torrents and TCP/9091 needs to be opened on the computer's firewall
 
@@ -62,11 +62,11 @@ $ iptables -A INPUT -p tcp --dport 9091 -j ACCEPT
 $ pip install pushbullet.py
 ```
 
-Put your PushBullet API key in api variable in the script and set a cron job to run pirate-remote.py every X minutes.
+Put your PushBullet API key in api variable in the script and set a cron job to run thepirate-satellite.py every X minutes.
 
 Make sure the server running Transmission (if not localhost) is accepting traffic on TCP/9091 and RPC is enabled in the Transmission settings.json file. Read about configuring Transmission [here](https://trac.transmissionbt.com/wiki/EditConfigFiles).
 
-![img](img/transmissionrpc_config.conf.png)
+![img](transmissionrpc_config.png)
 
 ### Usage
 
